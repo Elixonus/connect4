@@ -101,7 +101,6 @@ class Game
     {
       this.players[n].socket.emit("game",
       {
-        id: this.players[n].id,
         color: this.players[n].color,
         game:
         {
@@ -189,8 +188,7 @@ io.on("connection", function(socket)
   var client =
   {
     socket: socket,
-    id: ++_id,
-    color: "red"
+    id: ++_id
   };
 
   clients.push(client);
@@ -201,7 +199,6 @@ io.on("connection", function(socket)
   {
     if(games[n].players.length === 1)
     {
-      client.color = "yellow";
       game = games[n];
       game.started = true;
       break;

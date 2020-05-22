@@ -53,7 +53,8 @@
             var winColor;
             var width = 1920;
             var height = 1080;
-            var data;
+            var game;
+            var color;
             var clientData;
             var camera = {x: 0, y: 0};
             resize();
@@ -75,14 +76,14 @@
                 ctx.save();
                 ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
 
-                if(data != null)
+                if(game != null)
                 {            
                     if(win)
                     {
                         ctx.restore();
                         let winMessage;
                         
-                        if(data.color === winColor)
+                        if(game.color === winColor)
                         {
                             winMessage = "won";
                         }
@@ -97,9 +98,9 @@
 
                     else
                     {
-                        for(var n = 0; n < data.game.dots.length; n++)
+                        for(var n = 0; n < game.game.dots.length; n++)
                         {
-                            let dot = data.game.dots[n];
+                            let dot = game.game.dots[n];
 
                             if(dot.color === "red")
                             {
@@ -131,27 +132,27 @@
 
                 ctx.restore();
 
-                if(data != null)
+                if(game != null)
                 {
                     ctx.save();
                     ctx.translate(-camera.x * 0.5, -camera.y * 0.1);
 
-                    if(data.color === "red")
+                    if(game.color === "red")
                     {
                         ctx.fillStyle = "#ff0000";
                     }
 
-                    if(data.color === "yellow")
+                    if(game.color === "yellow")
                     {
                         ctx.fillStyle = "#ffff00";
                     }
 
-                    let messageIdentify = "You are " + data.color;
+                    let messageIdentify = "You are " + game.color;
                     ctx.font = "50px Arial";
                     ctx.fillText(messageIdentify, (canvas.width - ctx.measureText(messageIdentify).width) / 2, 50);
                     let messageTurn;
 
-                    if(data.game.turn === data.color)
+                    if(game.game.turn === game.color)
                     {
                         messageTurn = "It is your turn";
                     }
@@ -189,7 +190,7 @@
 
             socket.on("game", function(_data)
             {
-                data = _data;
+                game = _data;
                 title.innerHTML = "Connect4 Online";
                 playSound(drop);
             });
