@@ -1,0 +1,212 @@
+<!doctype HTML>
+<html>
+    <head>
+        <title>Connect Four!</title>
+    </head>
+    <body onresize="resize();">
+        <canvas width="1920" height="1080" id="canvas"></canvas>
+        <style>
+
+            body
+            {
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+            }
+
+            #canvas
+            {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+        <script>
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            var socket = io();
+            var reset = false;
+            var found = false;
+            var width = 1920;
+            var height = 1080;
+            var data;
+            var clientData;
+            var camera = {x: 0, y: 0};
+            resize();
+
+            function render()
+            {
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if(reset)
+                {
+                    displayMessage("The other user has left :/ Refresh to play with another user.");
+                    return;
+                }
+
+                if(!found)
+                {
+                    displayMessage("Waiting for a user");
+                }
+
+                if(data != null)
+                {
+                    if(data.color === "red")
+                    {
+                        ctx.fillStyle = "#ff0000";
+                    }
+
+                    if(data.color === "yellow")
+                    {
+                        ctx.fillStyle = "#ffff00";
+                    }
+
+                    let message = "You are " + data.color;
+                    ctx.font = "50px Arial";
+                    ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, 50);
+                    
+                    ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
+
+                    ctx.strokeStyle = "#0000ff";
+                    ctx.strokeRect(-(300 + 50), -(250 + 50), 600 + 50 * 2, 500 + 50 * 2);
+
+                    for(var n = 0; n < data.game.dots.length; n++)
+                    {
+                        let dot = data.game.dots[n];
+
+                        if(dot.color === "red")
+                        {
+                            ctx.fillStyle = "#ff0000";
+                        }
+
+                        else if(dot.color === "yellow")
+                        {
+                            ctx.fillStyle = "#ffff00";
+                        }
+
+                        ctx.beginPath();
+                        ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 50, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+
+                    ctx.translate(camera.x - canvas.width / 2, camera.y - canvas.height / 2);
+                }
+
+                window.requestAnimationFrame(render);
+            }
+
+            window.requestAnimationFrame(render);
+
+            function displayMessage(message)
+            {
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "50px Arial";
+                ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, canvas.height / 2);
+            }
+
+            socket.on("game", function(_data)
+            {
+                data = _data;
+            });
+
+            socket.on("found", function()
+            {
+                found = true;
+            });
+
+            socket.on("reset", function()
+            {
+                reset = true;
+            });
+
+            socket.on("hello", function(_clientData) {
+                clientData = _clientData;
+            })
+
+            window.onkeydown = keydown;
+            window.onkeyup = keyup;
+
+            function interpolateLinear(startingValue, endingValue, t)
+            {
+                return (startingValue + (endingValue - startingValue) * t);
+            }
+
+            function hueString(hue)
+            {
+                return ("hsl(" + hue + ", 100%, 50%)");
+            }
+
+            function keydown(event)
+            {
+                if(!event)
+                {
+                    event = window.event;
+                }
+                
+                let eventKey = event.key;
+                let column;
+                switch(eventKey)
+                {
+                    case "1":
+                        column = 0;
+                        break;
+                    case "2":
+                        column = 1;
+                        break;
+                    case "3":
+                        column = 2;
+                        break;
+                    case "4":
+                        column = 3;
+                        break;
+                    case "5":
+                        column = 4;
+                        break;
+                    case "6":
+                        column = 5;
+                        break;
+                    case "7":
+                        column = 6;
+                        break;
+                }
+
+                if(column != undefined)
+                {
+                    socket.emit("dot", {
+                        column: column
+                    });
+                }
+            }
+            
+            function keyup(event)
+            {
+                if(!event)
+                {
+                    event = window.event;
+                }
+                
+                var eventKey = event.key;
+            }
+
+            function resize()
+            {
+                if(window.innerWidth / window.innerHeight > canvas.width / canvas.height)
+                {
+                    canvas.style.width = window.innerHeight / window.innerWidth * canvas.width / canvas.height * 100 + "%";
+                    canvas.style.height = "100%";
+                }
+                
+                else
+                {
+                    canvas.style.width = "100%";
+                    canvas.style.height = window.innerWidth / window.innerHeight * canvas.height / canvas.width * 100 + "%";
+                }
+            }
+
+        </script>
+    </body>
+</html>
