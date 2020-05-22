@@ -5,6 +5,7 @@ class Game
     this.players = [];
     this.started = false;
     this.turn = "red";
+    this.winner;
     this.dots = [];
     this.dotColumns = [];
     for(var n = 0; n < 7; n++)
@@ -24,6 +25,52 @@ class Game
     }
     this.dots.push(dot);
     this.dotColumns[column].push(dot);
+
+    let sameColorNearbyDots = this.dots.filter(function(sameColorNearbyDot)
+    {
+      return (sameColorNearbyDot.color === dot.color && sameColorNearbyDot !== dot && sameColorNearbyDot.distanceToDot(dot) < 4);
+    });
+
+    let rowDirection;
+    let columnDirection;
+
+    for(var n = -1; n <= 1; n++)
+    {
+      for(var m = -1; m <= 1; m++)
+      {
+        if(n === m === 0)
+        {
+          n = m = 2;
+          break;
+        }
+
+        rowDirection = n;
+        columnDirection = m;
+
+        for(var j = 1; j < 4; j++)
+        {
+          let nextDot = sameColorNearbyDots.filter(function(sameColorNearbyDot)
+          {
+            return (sameColorNearbyDot.row === dot.row + rowDirection * j && sameColorNearbyDot.column === dot.column + columnDirection * j);
+          });
+
+          if(nextDot.length === 0)
+          {
+            break;
+          }
+
+          if(j === 3)
+          {
+            this.winner = dot.color;
+            for(var p = 0; p < this.players.length; p++)
+            {
+              this.players[p].socket.emit("win", this.winner);
+            }
+            n = m = 2;
+          }
+        }
+      }
+    }
   }
 
   putDotInRow(dot)
@@ -75,6 +122,32 @@ class Dot
     this.row = null;
     this.column = column;
   }
+
+  distanceToDot(dot)
+  {
+    if(this.row - dot.row !== 0 && this.column - dot.column !== 0)
+    {
+      if(Math.abs(this.row - dot.row) !== Math.abs(this.column - dot.column))
+      {
+        return false;
+      }
+
+      else
+      {
+        return Math.abs(this.row - dot.row);
+      }
+    }
+
+    else if(this.row - dot.row === 0)
+    {
+      return Math.abs(this.column - dot.column);
+    }
+
+    else if(this.column - dot.column === 0)
+    {
+      return Math.abs(this.row - dot.row);
+    }
+  }
 }
 
 var app = require("express")();
@@ -88,6 +161,11 @@ var _id = 0;
 app.get("/", function(req, res)
 {
   res.sendFile(__dirname + "/public/index.html");
+});
+
+app.get("/mask.png", function(req, res)
+{
+  res.sendFile(__dirname + "/public/mask.png");
 });
 
 io.on("connection", function(socket)

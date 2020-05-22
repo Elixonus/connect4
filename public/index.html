@@ -5,6 +5,7 @@
     </head>
     <body onresize="resize();">
         <canvas width="1920" height="1080" id="canvas"></canvas>
+        <img id="mask" src="./mask.png">
         <style>
 
             body
@@ -22,14 +23,23 @@
                 transform: translate(-50%, -50%);
             }
 
+            #mask
+            {
+                visibility: hidden;
+                pointer-events: none;
+            }
+
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
         <script>
+            var mask = document.getElementById("mask");
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
             var socket = io();
             var reset = false;
             var found = false;
+            var win = false;
+            var winColor;
             var width = 1920;
             var height = 1080;
             var data;
@@ -48,31 +58,15 @@
                     return;
                 }
 
-                if(!found)
-                {
-                    displayMessage("Waiting for a user");
-                }
-
                 if(data != null)
-                {
-                    if(data.color === "red")
+                {            
+                    if(win)
                     {
-                        ctx.fillStyle = "#ff0000";
+                        displayMessage(winColor.charAt(0).toUpperCase() + winColor.slice(1) + " has won. Refresh to play with another user.");
+                        return;
                     }
-
-                    if(data.color === "yellow")
-                    {
-                        ctx.fillStyle = "#ffff00";
-                    }
-
-                    let message = "You are " + data.color;
-                    ctx.font = "50px Arial";
-                    ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, 50);
                     
                     ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
-
-                    ctx.strokeStyle = "#0000ff";
-                    ctx.strokeRect(-(300 + 50), -(250 + 50), 600 + 50 * 2, 500 + 50 * 2);
 
                     for(var n = 0; n < data.game.dots.length; n++)
                     {
@@ -94,12 +88,39 @@
                     }
 
                     ctx.translate(camera.x - canvas.width / 2, camera.y - canvas.height / 2);
+
+                    if(data.color === "red")
+                    {
+                        ctx.fillStyle = "#ff0000";
+                    }
+
+                    if(data.color === "yellow")
+                    {
+                        ctx.fillStyle = "#ffff00";
+                    }
+
+                    let message = "You are " + data.color;
+                    ctx.font = "50px Arial";
+                    ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, 50);
+                }
+
+                if(!found)
+                {
+                    displayMessage("Waiting for a user");
+                }
+
+                else
+                {
+                    ctx.drawImage(mask, (canvas.width - mask.width) / 2, (canvas.height - mask.height) / 2);
                 }
 
                 window.requestAnimationFrame(render);
             }
 
-            window.requestAnimationFrame(render);
+            window.onload = function()
+            {
+                window.requestAnimationFrame(render);
+            }
 
             function displayMessage(message)
             {
@@ -121,6 +142,12 @@
             socket.on("reset", function()
             {
                 reset = true;
+            });
+
+            socket.on("win", function(_data)
+            {
+                win = true;
+                winColor = _data;
             });
 
             socket.on("hello", function(_clientData) {
