@@ -5,7 +5,8 @@
     </head>
     <body onresize="resize();">
         <canvas width="1920" height="1080" id="canvas"></canvas>
-        <img id="mask" src="./mask.png">
+        <img id="mask" class="hidden" src="./mask.png">
+        <img id="keys" class="hidden" src="./keys.png">
         <style>
 
             body
@@ -23,7 +24,7 @@
                 transform: translate(-50%, -50%);
             }
 
-            #mask
+            .hidden
             {
                 visibility: hidden;
                 pointer-events: none;
@@ -33,6 +34,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
         <script>
             var mask = document.getElementById("mask");
+            var keys = document.getElementById("keys");
+            var mouseX = 0;
+            var mouseY = 0;
+            var rawMouseX;
+            var rawMouseY;
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
             var socket = io();
@@ -49,6 +55,9 @@
 
             function render()
             {
+                camera.x = interpolateLinear(camera.x, mouseX * 50, 0.05);
+                camera.y = interpolateLinear(camera.y, mouseY * 50, 0.05);
+
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -58,36 +67,69 @@
                     return;
                 }
 
+                ctx.save();
+                ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
+
                 if(data != null)
                 {            
                     if(win)
                     {
-                        displayMessage(winColor.charAt(0).toUpperCase() + winColor.slice(1) + " has won. Refresh to play with another user.");
+                        ctx.restore();
+                        let winMessage;
+                        
+                        if(data.color === winColor)
+                        {
+                            winMessage = "won";
+                        }
+
+                        else
+                        {
+                            winMessage = "lost";
+                        }
+                        displayMessage("You have " + winMessage + ". Refresh to play with another user.");
                         return;
                     }
-                    
-                    ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
 
-                    for(var n = 0; n < data.game.dots.length; n++)
+                    else
                     {
-                        let dot = data.game.dots[n];
-
-                        if(dot.color === "red")
+                        for(var n = 0; n < data.game.dots.length; n++)
                         {
-                            ctx.fillStyle = "#ff0000";
-                        }
+                            let dot = data.game.dots[n];
 
-                        else if(dot.color === "yellow")
-                        {
-                            ctx.fillStyle = "#ffff00";
-                        }
+                            if(dot.color === "red")
+                            {
+                                ctx.fillStyle = "#ff0000";
+                            }
 
-                        ctx.beginPath();
-                        ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 50, 0, 2 * Math.PI);
-                        ctx.fill();
+                            else if(dot.color === "yellow")
+                            {
+                                ctx.fillStyle = "#ffff00";
+                            }
+
+                            ctx.beginPath();
+                            ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 50, 0, 2 * Math.PI);
+                            ctx.fill();
+                        }
                     }
+                }
 
-                    ctx.translate(camera.x - canvas.width / 2, camera.y - canvas.height / 2);
+                if(found)
+                {
+                    ctx.drawImage(mask, -mask.width / 2, -mask.height / 2);
+                    let x = -300 + -50 / 2;
+                    let y = 40 + (mask.height - 50) / 2;
+                    for(var n = 0; n < 7; n++)
+                    {
+                        ctx.drawImage(keys, n * 50, 0, 50, 50, x + n * 100, y, 50, 50);
+                    }
+                }
+
+                ctx.restore();
+
+                if(data != null)
+                {
+                    ctx.save();
+                    ctx.translate(-camera.x * 0.5, -camera.y * 0.1);
 
                     if(data.color === "red")
                     {
@@ -99,9 +141,23 @@
                         ctx.fillStyle = "#ffff00";
                     }
 
-                    let message = "You are " + data.color;
+                    let messageIdentify = "You are " + data.color;
                     ctx.font = "50px Arial";
-                    ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, 50);
+                    ctx.fillText(messageIdentify, (canvas.width - ctx.measureText(messageIdentify).width) / 2, 50);
+                    let messageTurn;
+
+                    if(data.game.turn === data.color)
+                    {
+                        messageTurn = "It is your turn";
+                    }
+
+                    else
+                    {
+                        messageTurn = "Waiting for other player";
+                    }
+                    ctx.font = "50px Arial";
+                    ctx.fillText(messageTurn, (canvas.width - ctx.measureText(messageTurn).width) / 2, canvas.height - 50);
+                    ctx.restore();
                 }
 
                 if(!found)
@@ -109,10 +165,19 @@
                     displayMessage("Waiting for a user");
                 }
 
-                else
+                /*else
                 {
-                    ctx.drawImage(mask, (canvas.width - mask.width) / 2, (canvas.height - mask.height) / 2);
-                }
+                    ctx.save();
+                    ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
+                    ctx.drawImage(mask, -mask.width / 2, -mask.height / 2);
+                    let x = -300 + -50 / 2;
+                    let y = 40 + (mask.height - 50) / 2;
+                    for(var n = 0; n < 7; n++)
+                    {
+                        ctx.drawImage(keys, n * 50, 0, 50, 50, x + n * 100, y, 50, 50);
+                    }
+                    ctx.restore();
+                }*/
 
                 window.requestAnimationFrame(render);
             }
@@ -124,6 +189,8 @@
 
             function displayMessage(message)
             {
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "50px Arial";
                 ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, canvas.height / 2);
@@ -154,6 +221,7 @@
                 clientData = _clientData;
             })
 
+            window.onmousemove = mousemove;
             window.onkeydown = keydown;
             window.onkeyup = keyup;
 
@@ -165,6 +233,18 @@
             function hueString(hue)
             {
                 return ("hsl(" + hue + ", 100%, 50%)");
+            }
+
+            function mousemove(event)
+            {
+                if(!event)
+                {
+                    event = window.event;
+                }
+
+                rawMouseX = event.clientX;
+                rawMouseY = event.clientY;
+                updateMouse();
             }
 
             function keydown(event)
@@ -231,6 +311,31 @@
                 {
                     canvas.style.width = "100%";
                     canvas.style.height = window.innerWidth / window.innerHeight * canvas.height / canvas.width * 100 + "%";
+                }
+
+                updateMouse();
+            }
+
+            function updateMouse()
+            {
+                if(rawMouseX == undefined)
+                {
+                    mouseX = 0;
+                }
+
+                else
+                {
+                    mouseX = 2 * (rawMouseX / window.innerWidth - 0.5);
+                }
+
+                if(rawMouseY == undefined)
+                {
+                    mouseY = 0;
+                }
+
+                else
+                {
+                    mouseY = 2 * (rawMouseY / window.innerHeight - 0.5);
                 }
             }
 

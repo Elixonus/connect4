@@ -41,7 +41,7 @@ class Game
         if(n === m === 0)
         {
           n = m = 2;
-          break;
+          continue;
         }
 
         rowDirection = n;
@@ -105,7 +105,7 @@ class Game
         color: this.players[n].color,
         game:
         {
-          started: this.started,
+          turn: this.turn,
           dots: this.dots,
           dotColumns: this.dotColumns
         }
@@ -166,6 +166,11 @@ app.get("/", function(req, res)
 app.get("/mask.png", function(req, res)
 {
   res.sendFile(__dirname + "/public/mask.png");
+});
+
+app.get("/keys.png", function(req, res)
+{
+  res.sendFile(__dirname + "/public/keys.png");
 });
 
 io.on("connection", function(socket)
@@ -285,18 +290,3 @@ http.listen(3000, function()
 {
   console.log("listening on *:3000");
 });
-
-function clampMin(num, min)
-{
-    return num < min ? min : num;
-}
-
-function clampMax(num, max)
-{
-    return num > max ? max : num;
-}
-
-function clamp(num, min, max)
-{
-    return num < min ? min : num > max ? max : num;
-}
