@@ -1,12 +1,14 @@
 <!doctype HTML>
 <html>
     <head>
-        <title>Connect Four!</title>
+        <title>Looking for a game...</title>
     </head>
     <body onresize="resize();">
         <canvas width="1920" height="1080" id="canvas"></canvas>
         <img id="mask" class="hidden" src="./mask.png">
         <img id="keys" class="hidden" src="./keys.png">
+        <audio id="join" class="hidden"><source src="./join.mp3" type="audio/mpeg"></audio>
+        <audio id="drop" class="hidden"><source src="./drop.mp3" type="audio/mpeg"></audio>
         <style>
 
             body
@@ -33,8 +35,11 @@
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
         <script>
+            var title = document.getElementsByTagName("title")[0];
             var mask = document.getElementById("mask");
             var keys = document.getElementById("keys");
+            var join = document.getElementById("join");
+            var drop = document.getElementById("drop");
             var mouseX = 0;
             var mouseY = 0;
             var rawMouseX;
@@ -63,7 +68,7 @@
 
                 if(reset)
                 {
-                    displayMessage("The other user has left :/ Refresh to play with another user.");
+                    displayMessage("The other user has left the game. Refresh to play with another user.");
                     return;
                 }
 
@@ -107,7 +112,7 @@
                             }
 
                             ctx.beginPath();
-                            ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 50, 0, 2 * Math.PI);
+                            ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 40, 0, 2 * Math.PI);
                             ctx.fill();
                         }
                     }
@@ -165,20 +170,6 @@
                     displayMessage("Waiting for a user");
                 }
 
-                /*else
-                {
-                    ctx.save();
-                    ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
-                    ctx.drawImage(mask, -mask.width / 2, -mask.height / 2);
-                    let x = -300 + -50 / 2;
-                    let y = 40 + (mask.height - 50) / 2;
-                    for(var n = 0; n < 7; n++)
-                    {
-                        ctx.drawImage(keys, n * 50, 0, 50, 50, x + n * 100, y, 50, 50);
-                    }
-                    ctx.restore();
-                }*/
-
                 window.requestAnimationFrame(render);
             }
 
@@ -199,15 +190,20 @@
             socket.on("game", function(_data)
             {
                 data = _data;
+                title.innerHTML = "Connect4 Online";
+                playSound(drop);
             });
 
             socket.on("found", function()
             {
                 found = true;
+                title.innerHTML = "Found a game";
+                playSound(join);
             });
 
             socket.on("reset", function()
             {
+                title.innerHTML = "Other user has left the game"
                 reset = true;
             });
 
@@ -220,6 +216,13 @@
             socket.on("hello", function(_clientData) {
                 clientData = _clientData;
             })
+
+            function playSound(audioElement)
+            {
+                let newAudioElement = audioElement.cloneNode(true);
+                newAudioElement.autoplay = true;
+                document.body.appendChild(newAudioElement);
+            }
 
             window.onmousemove = mousemove;
             window.onkeydown = keydown;

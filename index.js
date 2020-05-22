@@ -173,6 +173,16 @@ app.get("/keys.png", function(req, res)
   res.sendFile(__dirname + "/public/keys.png");
 });
 
+app.get("/join.mp3", function(req, res)
+{
+  res.sendFile(__dirname + "/public/join.mp3");
+});
+
+app.get("/drop.mp3", function(req, res)
+{
+  res.sendFile(__dirname + "/public/drop.mp3");
+});
+
 io.on("connection", function(socket)
 {
   console.log("a user connected");
@@ -256,19 +266,20 @@ io.on("connection", function(socket)
 
     if(game.turn === client.color)
     {
-      game.addDot(client.color, column);
-
-      if(game.turn === "red")
+      if(game.addDot(client.color, column) !== false)
       {
-        game.turn = "yellow";
+        if(game.turn === "red")
+        {
+          game.turn = "yellow";
+        }
+  
+        else if(game.turn === "yellow")
+        {
+          game.turn = "red";
+        }
+  
+        game.sendData();
       }
-
-      else if(game.turn === "yellow")
-      {
-        game.turn = "red";
-      }
-
-      game.sendData();
     }
   });
 
