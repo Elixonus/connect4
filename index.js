@@ -156,6 +156,11 @@ app.get("/", function(req, res)
   res.sendFile(__dirname + "/public/index.html");
 });
 
+app.get("/lodash.js", function(req, res)
+{
+  res.sendFile(__dirname + "/public/lodash.js");
+});
+
 app.get("/mask.png", function(req, res)
 {
   res.sendFile(__dirname + "/public/mask.png");
@@ -253,34 +258,37 @@ io.on("connection", function(socket)
       game.players[1 - index].color = "yellow";
     }
 
-    if(game.turn === client.color)
+    if(game.turn === client.color && game.winner == null)
     {
       let result = game.addDot(client.color, column);
 
-      if(result !== false)
+      if(result === false)
       {
-        if(game.turn === "red")
+        return;
+      }
+
+      if(game.turn === "red")
+      {
+        game.turn = "yellow";
+      }
+
+      else if(game.turn === "yellow")
+      {
+        game.turn = "red";
+      }
+
+      for(var n = 0; n < game.players.length; n++)
+      {
+        game.players[n].socket.emit("game",
         {
-          game.turn = "yellow";
-        }
-  
-        else if(game.turn === "yellow")
-        {
-          game.turn = "red";
-        }
-  
-        for(var n = 0; n < game.players.length; n++)
-        {
-          game.players[n].socket.emit("game",
+          color: game.players[n].color,
+          main:
           {
-            color: game.players[n].color,
-            main:
-            {
-              turn: game.turn,
-              dot: result
-            }
-          });
-        }
+            turn: game.turn,
+            dot: result
+          },
+          dotCount: game.dots.length
+        });
       }
     }
   });

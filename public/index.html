@@ -46,7 +46,7 @@
             var rawMouseY;
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
-            var socket = io();
+            var socket;
             var reset = false;
             var found = false;
             var win = false;
@@ -223,8 +223,53 @@
 
             window.onload = function()
             {
+                socket = io();
+                socket.on("game", function(_data)
+                {
+                    newData = _data.main;
+                    newData.dot.rowPosition = 6.5;
+                    newData.dot.rowSpeed = 0;
+                    newData.dot.rowAcceleration = 0.01;
+                    newData.dot.firstBounce = true;
+                    newData.dot.opacity = 0;
+                    game.push(newData);
+
+                    if(_data.dotCount !== game.length)
+                    {
+                        console.log("Missed packet");
+                    }
+
+                    color = _data.color;
+                });
+
+                socket.on("found", function()
+                {
+                    found = true;
+                    title.innerHTML = "Connect4 Online";
+                    playSound(join);
+                });
+
+                socket.on("reset", function()
+                {
+                    title.innerHTML = "Other user has left the game"
+                    reset = true;
+                });
+
+                socket.on("win", function(_data)
+                {
+                    winColor = _data;
+
+                    setTimeout(function()
+                    {
+                        win = true;
+                    }, 1000);
+                });
+
+                socket.on("hello", function(_clientData) {
+                    clientData = _clientData;
+                });
                 window.requestAnimationFrame(render);
-            }
+            };
 
             function displayMessage(message)
             {
@@ -234,46 +279,6 @@
                 ctx.font = "50px Arial";
                 ctx.fillText(message, (canvas.width - ctx.measureText(message).width) / 2, canvas.height / 2);
             }
-
-            socket.on("game", function(_data)
-            {
-                newData = _data.main;
-                newData.dot.rowPosition = 6.5;
-                newData.dot.rowSpeed = 0;
-                newData.dot.rowAcceleration = 0.01;
-                newData.dot.firstBounce = true;
-                newData.dot.opacity = 0;
-                game.push(newData);
-                color = _data.color;
-                title.innerHTML = "Connect4 Online";
-            });
-
-            socket.on("found", function()
-            {
-                found = true;
-                title.innerHTML = "Found a game";
-                playSound(join);
-            });
-
-            socket.on("reset", function()
-            {
-                title.innerHTML = "Other user has left the game"
-                reset = true;
-            });
-
-            socket.on("win", function(_data)
-            {
-                winColor = _data;
-
-                setTimeout(function()
-                {
-                    win = true;
-                }, 1000);
-            });
-
-            socket.on("hello", function(_clientData) {
-                clientData = _clientData;
-            })
 
             function playSound(audioElement)
             {
@@ -289,11 +294,6 @@
             function interpolateLinear(startingValue, endingValue, t)
             {
                 return (startingValue + (endingValue - startingValue) * t);
-            }
-
-            function hueString(hue)
-            {
-                return ("hsl(" + hue + ", 100%, 50%)");
             }
 
             function mousemove(event)
