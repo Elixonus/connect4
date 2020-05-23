@@ -41,7 +41,6 @@ class Game
       {
         if(n === m === 0)
         {
-          n = m = 2;
           continue;
         }
 
