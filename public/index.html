@@ -53,7 +53,8 @@
             var winColor;
             var width = 1920;
             var height = 1080;
-            var game;
+            var game = [];
+            var newDot;
             var color;
             var clientData;
             var camera = {x: 0, y: 0};
@@ -76,44 +77,86 @@
                 ctx.save();
                 ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
 
-                if(game != null)
+                if(game.length !== 0)
                 {            
                     if(win)
                     {
                         ctx.restore();
-                        let winMessage;
                         
-                        if(game.color === winColor)
+                        if(winColor === "red" || winColor === "yellow")
                         {
-                            winMessage = "won";
+                            let winMessage;
+
+                            if(color === winColor)
+                            {
+                                winMessage = "won";
+                            }
+
+                            else
+                            {
+                                winMessage = "lost";
+                            }
+
+                            displayMessage("You have " + winMessage + ". Refresh to play with another user.");
                         }
 
                         else
                         {
-                            winMessage = "lost";
+                            displayMessage("Tie game. Refresh to play with another user.");
                         }
-                        displayMessage("You have " + winMessage + ". Refresh to play with another user.");
+                        
                         return;
                     }
 
                     else
                     {
-                        for(var n = 0; n < game.game.dots.length; n++)
+                        for(var n = 0; n < game.length; n++)
                         {
-                            let dot = game.game.dots[n];
+                            let dot = game[n].dot;
+                            dot.rowSpeed += dot.rowAcceleration;
+                            dot.rowPosition -= dot.rowSpeed;
+
+                            if(dot.rowPosition < dot.row)
+                            {
+                                dot.rowPosition = dot.row;
+                                dot.rowSpeed *= -0.3;
+                                dot.rowAcceleration *= 1.5;
+
+                                if(dot.rowSpeed < 0.001)
+                                {
+                                    dot.rowPosition = dot.row;
+                                    dot.rowSpeed = 0;
+                                    dot.rowAcceleration = 0;
+                                }
+
+                                if(dot.firstBounce)
+                                {
+                                    playSound(drop);
+                                }
+                                
+                                dot.firstBounce = false;
+                            }
+
+                            let x = 100 * (dot.column - 3);
+                            let y = 100 * ((5 - dot.rowPosition) - 2.5);
+                            console.log(x, y, dot.column, dot.rowPosition);
+                            let grd = ctx.createRadialGradient(x, y, 0, x, y, 40);
 
                             if(dot.color === "red")
                             {
-                                ctx.fillStyle = "#ff0000";
+                                grd.addColorStop(0, "#ff0000");
+                                grd.addColorStop(1, "#900000");
                             }
 
                             else if(dot.color === "yellow")
                             {
-                                ctx.fillStyle = "#ffff00";
+                                grd.addColorStop(0, "#ffff00");
+                                grd.addColorStop(1, "#909000");
                             }
 
+                            ctx.fillStyle = grd;
                             ctx.beginPath();
-                            ctx.arc(100 * (dot.column - 3), 100 * ((5 - dot.row) - 2.5), 40, 0, 2 * Math.PI);
+                            ctx.arc(x, y, 40, 0, 2 * Math.PI);
                             ctx.fill();
                         }
                     }
@@ -132,27 +175,27 @@
 
                 ctx.restore();
 
-                if(game != null)
+                if(game.length !== 0)
                 {
                     ctx.save();
                     ctx.translate(-camera.x * 0.5, -camera.y * 0.1);
 
-                    if(game.color === "red")
+                    if(color === "red")
                     {
                         ctx.fillStyle = "#ff0000";
                     }
 
-                    if(game.color === "yellow")
+                    if(color === "yellow")
                     {
                         ctx.fillStyle = "#ffff00";
                     }
 
-                    let messageIdentify = "You are " + game.color;
+                    let messageIdentify = "You are " + color;
                     ctx.font = "50px Arial";
                     ctx.fillText(messageIdentify, (canvas.width - ctx.measureText(messageIdentify).width) / 2, 50);
                     let messageTurn;
 
-                    if(game.game.turn === game.color)
+                    if(game[game.length -1].turn === color)
                     {
                         messageTurn = "It is your turn";
                     }
@@ -190,9 +233,14 @@
 
             socket.on("game", function(_data)
             {
-                game = _data;
+                newData = _data.main;
+                newData.dot.rowPosition = 6;
+                newData.dot.rowSpeed = 0;
+                newData.dot.rowAcceleration = 0.01;
+                newData.dot.firstBounce = true;
+                game.push(newData);
+                color = _data.color;
                 title.innerHTML = "Connect4 Online";
-                playSound(drop);
             });
 
             socket.on("found", function()
@@ -210,8 +258,12 @@
 
             socket.on("win", function(_data)
             {
-                win = true;
                 winColor = _data;
+
+                setTimeout(function()
+                {
+                    win = true;
+                }, 1000);
             });
 
             socket.on("hello", function(_clientData) {

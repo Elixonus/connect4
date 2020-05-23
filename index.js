@@ -19,7 +19,8 @@ class Game
     // color is "red" or "yellow"
     // column is 0-6 int
     let dot = new Dot(color, column);
-    if(this.putDotInRow(dot) === false)
+    let result = this.putDotInRow(dot);
+    if(result === false)
     {
       return false;
     }
@@ -71,6 +72,16 @@ class Game
         }
       }
     }
+
+    if(this.dots.length === 6 * 7 && this.winner == null)
+    {
+      for(var p = 0; p < this.players.length; p++)
+      {
+        this.players[p].socket.emit("win", this.winner);
+      }
+    }
+
+    return dot;
   }
 
   putDotInRow(dot)
@@ -93,23 +104,7 @@ class Game
     }
 
     dot.row = newRow;
-  }
-
-  sendData()
-  {
-    for(var n = 0; n < this.players.length; n++)
-    {
-      this.players[n].socket.emit("game",
-      {
-        color: this.players[n].color,
-        game:
-        {
-          turn: this.turn,
-          dots: this.dots,
-          dotColumns: this.dotColumns
-        }
-      });
-    }
+    return newRow;
   }
 }
 
@@ -263,7 +258,9 @@ io.on("connection", function(socket)
 
     if(game.turn === client.color)
     {
-      if(game.addDot(client.color, column) !== false)
+      let result = game.addDot(client.color, column);
+
+      if(result !== false)
       {
         if(game.turn === "red")
         {
@@ -275,7 +272,18 @@ io.on("connection", function(socket)
           game.turn = "red";
         }
   
-        game.sendData();
+        for(var n = 0; n < game.players.length; n++)
+        {
+          game.players[n].socket.emit("game",
+          {
+            color: game.players[n].color,
+            main:
+            {
+              turn: game.turn,
+              dot: result
+            }
+          });
+        }
       }
     }
   });
