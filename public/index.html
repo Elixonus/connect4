@@ -137,9 +137,10 @@
                                 dot.firstBounce = false;
                             }
 
+                            dot.opacity = Math.min(dot.opacity + 0.1, 1);
+
                             let x = 100 * (dot.column - 3);
                             let y = 100 * ((5 - dot.rowPosition) - 2.5);
-                            console.log(x, y, dot.column, dot.rowPosition);
                             let grd = ctx.createRadialGradient(x, y, 0, x, y, 40);
 
                             if(dot.color === "red")
@@ -155,10 +156,13 @@
                             }
 
                             ctx.fillStyle = grd;
+                            ctx.globalAlpha = dot.opacity;
                             ctx.beginPath();
                             ctx.arc(x, y, 40, 0, 2 * Math.PI);
                             ctx.fill();
                         }
+
+                        ctx.globalAlpha = 1;
                     }
                 }
 
@@ -234,10 +238,11 @@
             socket.on("game", function(_data)
             {
                 newData = _data.main;
-                newData.dot.rowPosition = 6;
+                newData.dot.rowPosition = 6.5;
                 newData.dot.rowSpeed = 0;
                 newData.dot.rowAcceleration = 0.01;
                 newData.dot.firstBounce = true;
+                newData.dot.opacity = 0;
                 game.push(newData);
                 color = _data.color;
                 title.innerHTML = "Connect4 Online";
@@ -339,9 +344,7 @@
 
                 if(column != undefined)
                 {
-                    socket.emit("dot", {
-                        column: column
-                    });
+                    socket.emit("column", column);
                 }
             }
             

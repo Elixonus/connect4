@@ -225,14 +225,12 @@ io.on("connection", function(socket)
     id: client.id
   });
 
-  socket.on("dot", function(data)
+  socket.on("column", function(column)
   {
     if(!game.started)
     {
       return;
     }
-
-    let column = data.column;
 
     if(isNaN(column))
     {
