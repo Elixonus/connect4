@@ -156,11 +156,6 @@ app.get("/", function(req, res)
   res.sendFile(__dirname + "/public/index.html");
 });
 
-app.get("/lodash.js", function(req, res)
-{
-  res.sendFile(__dirname + "/public/lodash.js");
-});
-
 app.get("/mask.png", function(req, res)
 {
   res.sendFile(__dirname + "/public/mask.png");
@@ -286,8 +281,7 @@ io.on("connection", function(socket)
           {
             turn: game.turn,
             dot: result
-          },
-          dotCount: game.dots.length
+          }
         });
       }
     }

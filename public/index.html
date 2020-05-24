@@ -46,7 +46,7 @@
             var rawMouseY;
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
-            var socket;
+            var socket = io();
             var reset = false;
             var found = false;
             var win = false;
@@ -75,7 +75,10 @@
                 }
 
                 ctx.save();
-                ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                let scalingFactor = 1.2 - Math.hypot(Math.pow(camera.x / 50, 2) + Math.pow(camera.y / 50, 2)) * 0.2;
+                ctx.scale(scalingFactor, scalingFactor);
+                ctx.translate(-camera.x, -camera.y);
 
                 if(game.length !== 0)
                 {            
@@ -183,6 +186,8 @@
                 {
                     ctx.save();
                     ctx.translate(-camera.x * 0.5, -camera.y * 0.1);
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = "#000000";
 
                     if(color === "red")
                     {
@@ -221,55 +226,45 @@
                 window.requestAnimationFrame(render);
             }
 
-            window.onload = function()
+            socket.on("game", function(_data)
             {
-                socket = io();
-                socket.on("game", function(_data)
+                newData = _data.main;
+                newData.dot.rowPosition = 6.5;
+                newData.dot.rowSpeed = 0;
+                newData.dot.rowAcceleration = 0.01;
+                newData.dot.firstBounce = true;
+                newData.dot.opacity = 0;
+                game.push(newData);
+                color = _data.color;
+            });
+
+            socket.on("found", function()
+            {
+                found = true;
+                title.innerHTML = "Connect4 Online";
+                playSound(join);
+            });
+
+            socket.on("reset", function()
+            {
+                title.innerHTML = "Other user has left the game"
+                reset = true;
+            });
+
+            socket.on("win", function(_data)
+            {
+                winColor = _data;
+
+                setTimeout(function()
                 {
-                    newData = _data.main;
-                    newData.dot.rowPosition = 6.5;
-                    newData.dot.rowSpeed = 0;
-                    newData.dot.rowAcceleration = 0.01;
-                    newData.dot.firstBounce = true;
-                    newData.dot.opacity = 0;
-                    game.push(newData);
+                    win = true;
+                }, 1000);
+            });
 
-                    if(_data.dotCount !== game.length)
-                    {
-                        console.log("Missed packet");
-                    }
-
-                    color = _data.color;
-                });
-
-                socket.on("found", function()
-                {
-                    found = true;
-                    title.innerHTML = "Connect4 Online";
-                    playSound(join);
-                });
-
-                socket.on("reset", function()
-                {
-                    title.innerHTML = "Other user has left the game"
-                    reset = true;
-                });
-
-                socket.on("win", function(_data)
-                {
-                    winColor = _data;
-
-                    setTimeout(function()
-                    {
-                        win = true;
-                    }, 1000);
-                });
-
-                socket.on("hello", function(_clientData) {
-                    clientData = _clientData;
-                });
-                window.requestAnimationFrame(render);
-            };
+            socket.on("hello", function(_clientData) {
+                clientData = _clientData;
+            });
+            window.requestAnimationFrame(render);
 
             function displayMessage(message)
             {
@@ -283,8 +278,12 @@
             function playSound(audioElement)
             {
                 let newAudioElement = audioElement.cloneNode(true);
-                newAudioElement.autoplay = true;
                 document.body.appendChild(newAudioElement);
+
+                newAudioElement.addEventListener("canplaythrough", function()
+                {
+                    newAudioElement.play();
+                }, false);
             }
 
             window.onmousemove = mousemove;
