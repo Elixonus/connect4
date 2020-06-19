@@ -122,10 +122,10 @@
                             if(dot.rowPosition < dot.row)
                             {
                                 dot.rowPosition = dot.row;
-                                dot.rowSpeed *= -0.3;
+                                dot.rowSpeed *= -0.2;
                                 dot.rowAcceleration *= 1.5;
 
-                                if(dot.rowSpeed < 0.001)
+                                if(Math.abs(dot.rowSpeed) < 0.001)
                                 {
                                     dot.rowPosition = dot.row;
                                     dot.rowSpeed = 0;
@@ -144,21 +144,17 @@
 
                             let x = 100 * (dot.column - 3);
                             let y = 100 * ((5 - dot.rowPosition) - 2.5);
-                            let grd = ctx.createRadialGradient(x, y, 0, x, y, 40);
 
                             if(dot.color === "red")
                             {
-                                grd.addColorStop(0, "#ff0000");
-                                grd.addColorStop(1, "#900000");
+                                ctx.fillStyle = "#ff0000";
                             }
 
                             else if(dot.color === "yellow")
                             {
-                                grd.addColorStop(0, "#ffff00");
-                                grd.addColorStop(1, "#909000");
+                                ctx.fillStyle = "#ffff00";
                             }
-
-                            ctx.fillStyle = grd;
+                            
                             ctx.globalAlpha = dot.opacity;
                             ctx.beginPath();
                             ctx.arc(x, y, 40, 0, 2 * Math.PI);
@@ -258,7 +254,7 @@
                 setTimeout(function()
                 {
                     win = true;
-                }, 1000);
+                }, 2000);
             });
 
             socket.on("hello", function(_clientData) {
