@@ -9,3 +9,6 @@ NodeJS server for backend
 Unlimited sessions can be hosted (so long memory allows)
 
 Instant matchmaking with players.
+
+## Screenshot
+![Screenshot](screenshot.png)
