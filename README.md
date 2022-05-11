@@ -2,11 +2,11 @@
 Multiplayer connect4 online game with centralized server.
 
 ## Features
-HTML5 javascript canvas for frontend
+HTML5 javascript canvas browser client as frontend.
 
-NodeJS server for backend
+NodeJS server as backend.
 
-Unlimited sessions can be hosted (so long memory allows)
+Unlimited sessions can be hosted (so long memory allows).
 
 Instant matchmaking with players.
 
