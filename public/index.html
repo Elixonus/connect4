@@ -114,6 +114,8 @@
 
                     else
                     {
+                        console.log(game[0].dot);
+
                         for(var n = 0; n < game.length; n++)
                         {
                             let dot = game[n].dot;
@@ -124,7 +126,6 @@
                             {
                                 dot.rowPosition = dot.row;
                                 dot.rowSpeed *= -0.2;
-                                dot.rowAcceleration *= 1.5;
 
                                 if(Math.abs(dot.rowSpeed) < 0.001)
                                 {
