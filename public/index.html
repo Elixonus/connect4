@@ -114,8 +114,6 @@
 
                     else
                     {
-                        console.log(game[0].dot);
-
                         for(var n = 0; n < game.length; n++)
                         {
                             let dot = game[n].dot;
@@ -182,8 +180,6 @@
 
                 if(game.length !== 0)
                 {
-                    ctx.save();
-                    ctx.translate(-camera.x * 0.5, -camera.y * 0.1);
                     ctx.shadowBlur = 5;
                     ctx.shadowColor = "#000000";
 
@@ -213,7 +209,6 @@
                     }
                     ctx.font = "50px Arial";
                     ctx.fillText(messageTurn, (canvas.width - ctx.measureText(messageTurn).width) / 2, canvas.height - 50);
-                    ctx.restore();
                 }
 
                 if(!found)
