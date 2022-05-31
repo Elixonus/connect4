@@ -151,14 +151,24 @@ var games = [];
 var clients = [];
 var _id = 0;
 
-app.get("/socket.js", function(req, res)
+app.get("/socket.io.js", function(req, res)
 {
-  res.sendFile(__dirname + "/public/socket.js");
+  res.sendFile(__dirname + "/public/socket.io.js");
+});
+
+app.get("/socket.io.js.map", function(req, res)
+{
+  res.sendFile(__dirname + "/public/socket.io.js.map");
 });
 
 app.get("/", function(req, res)
 {
   res.sendFile(__dirname + "/public/index.html");
+});
+
+app.get("/favicon.ico", function(req, res)
+{
+  res.sendFile(__dirname + "/public/favicon.ico");
 });
 
 app.get("/mask.png", function(req, res)
