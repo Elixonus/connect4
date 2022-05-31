@@ -151,6 +151,11 @@ var games = [];
 var clients = [];
 var _id = 0;
 
+app.get("/socket.js", function(req, res)
+{
+  res.sendFile(__dirname + "/public/socket.js");
+});
+
 app.get("/", function(req, res)
 {
   res.sendFile(__dirname + "/public/index.html");
