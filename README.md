@@ -1,4 +1,4 @@
-# connect4_nodeJS 🟡
+# connect4 🟡
 Multiplayer connect4 online game with centralized server.
 
 ## Usage
