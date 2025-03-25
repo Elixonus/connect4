@@ -27,46 +27,49 @@ class Game
     this.dots.push(dot);
     this.dotColumns[column].push(dot);
 
-    let sameColorNearbyDots = this.dots.filter(function(sameColorNearbyDot)
+    outerloop:
+    for(let i = 0; i < this.dotColumns.length; i++)
     {
-      return (sameColorNearbyDot.color === dot.color && sameColorNearbyDot !== dot && sameColorNearbyDot.distanceToDot(dot) < 4);
-    });
-
-    let rowDirection;
-    let columnDirection;
-
-    for(var n = -1; n <= 1; n++)
-    {
-      for(var m = -1; m <= 1; m++)
+      for(let j = 0; j < this.dotColumns[i].length; j++)
       {
-        if(n === m === 0)
+        let dot = this.dotColumns[i][j];
+
+        let sameColorNearbyDots = this.dots.filter(function(sameColorNearbyDot)
         {
-          continue;
-        }
+          return (sameColorNearbyDot.color === dot.color && sameColorNearbyDot !== dot && sameColorNearbyDot.distanceToDot(dot) < 4);
+        });
 
-        rowDirection = n;
-        columnDirection = m;
-
-        for(var j = 1; j < 4; j++)
+        for(let di = -1; di <= 1; di++)
         {
-          let nextDot = sameColorNearbyDots.filter(function(sameColorNearbyDot)
+          for(let dj = -1; dj <= 1; dj++)
           {
-            return (sameColorNearbyDot.row === dot.row + rowDirection * j && sameColorNearbyDot.column === dot.column + columnDirection * j);
-          });
-
-          if(nextDot.length === 0)
-          {
-            break;
-          }
-
-          if(j === 3)
-          {
-            this.winner = dot.color;
-            for(var p = 0; p < this.players.length; p++)
+            if(di === dj === 0)
             {
-              this.players[p].socket.emit("win", this.winner);
+              continue;
             }
-            n = m = 2;
+
+            for(var n = 1; n < 4; n++)
+            {
+              let nextDot = sameColorNearbyDots.filter(function(sameColorNearbyDot)
+              {
+                return (sameColorNearbyDot.row === dot.row + di * n && sameColorNearbyDot.column === dot.column + dj * n);
+              });
+      
+              if(nextDot.length === 0)
+              {
+                break;
+              }
+    
+              if(n === 3)
+              {
+                this.winner = dot.color;
+                for(var p = 0; p < this.players.length; p++)
+                {
+                  this.players[p].socket.emit("win", this.winner);
+                }
+                break outerloop;
+              }
+            }
           }
         }
       }
@@ -79,7 +82,6 @@ class Game
         this.players[p].socket.emit("win", this.winner);
       }
     }
-
     return dot;
   }
 
